@@ -1,21 +1,27 @@
 ##
-## OTOPILOT, 2022
-## Otopilot Makefile
+## DOLPHIN CI, 2022
+## Dolphin CI Makefile
 ## File description:
-## Generic Makefile for Otopilot Website
+## Generic Makefile for Dolphin CI
 ##
 
 #=================================
 #	Variables
 #=================================
 
-APP_NAME 	= test-webhook
+APP_NAME 	= dolphin-ci
 
 APP_VERSION = 1.0
 
+DOCKER_USERNAME = root
+
+DOCKER_PASSWORD = password
+
+DOCKER_REGISTRY = registry.me:3000
+
 DOCKER_NAME = $(APP_NAME):$(APP_VERSION)
 
-DOCKER_REMOTE = otopilot/test-webhook
+DOCKER_REMOTE = dolphin-ci/dolphin-ci
 
 #=================================
 #	Commands
@@ -29,6 +35,7 @@ DOCKER_REMOTE = otopilot/test-webhook
 					certbot-renew \
 					certbot-delete \
 					run-prod \
+					run-dev \
 					all
 
 # Start the react app in development mode
@@ -37,10 +44,16 @@ all:
 
 #	Production
 
+run-dev:
+					yarn run dev
+
 run-prod:
 					npm install
 					make build-react
 					export NODE_ENV=prod && node app.js
+
+docker-login:
+					docker login $(DOCKER_REGISTRY) -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
 
 docker-build:
 					docker build --file Dockerfile --tag $(DOCKER_NAME) .
@@ -48,23 +61,9 @@ docker-build:
 docker-run:			docker-build
 					docker run --detach --publish 80:80 --publish 443:443 $(DOCKER_NAME)
 
+# Create a image from the Dockerfile and push it to the registry at localhost:3000
 docker-push:
 					docker build --platform=linux/amd64 -t $(DOCKER_NAME) .
-					docker tag $(DOCKER_NAME) $(DOCKER_REMOTE):$(APP_VERSION)
-					docker push $(DOCKER_REMOTE):$(APP_VERSION)
-					docker push $(DOCKER_REMOTE):$(APP_VERSION)
-
-#	Certificates
-certbot-create:
-					sudo certbot certonly --domain $(DOMAIN),www.$(DOMAIN) --standalone
-
-certbot-delete:
-					sudo rm -rf /etc/letsencrypt/live/* /etc/letsencrypt/archive/* /etc/letsencrypt/renewal/*
-
-certbot-renew:
-					sudo certbot certonly renew
-
-#	Bundle
-
-build-react:
-					npm run build
+					docker tag $(DOCKER_NAME) $(DOCKER_REGISTRY)/$(DOCKER_REMOTE):$(APP_VERSION)
+					docker push $(DOCKER_REGISTRY)/$(DOCKER_REMOTE):$(APP_VERSION)
+					docker push $(DOCKER_REGISTRY)/$(DOCKER_REMOTE):$(APP_VERSION)

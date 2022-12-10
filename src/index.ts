@@ -7,5 +7,5 @@ import server from './server';
 
 // **** Start server **** //
 
-const msg = ('🐳 Docker Hub webhook is started on port: ' + EnvVars.port.toString());
+const msg = ('🐬 Dolphin CI is started on port: ' + EnvVars.port.toString());
 server.listen(EnvVars.port, () => logger.info(msg));
